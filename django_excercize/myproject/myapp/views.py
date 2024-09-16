@@ -12,7 +12,6 @@ def drinks(request,drink_name):
     title = f"<h2> {drink_name} </h2>"
     return HttpResponse(f"<h2>{drink_name}</h2> " + choice_of_drink)
 
-# Create your views here.
 def home(response):
     return HttpResponse('''Welcome to Little Lemon!''')
 

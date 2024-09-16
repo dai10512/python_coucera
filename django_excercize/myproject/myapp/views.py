@@ -11,3 +11,16 @@ def drinks(request,drink_name):
     choice_of_drink = drinkDic[drink_name]
     title = f"<h2> {drink_name} </h2>"
     return HttpResponse(f"<h2>{drink_name}</h2> " + choice_of_drink)
+
+# Create your views here.
+def home(response):
+    return HttpResponse('''Welcome to Little Lemon!''')
+
+def about(response):
+    return HttpResponse('''About us''')
+
+def menu(response):
+    return HttpResponse('''Menu''')
+
+def book(response):
+    return HttpResponse('''Make a booking''')

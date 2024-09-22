@@ -25,3 +25,11 @@ class Employees(models.Model):
 
     def __str__(self) -> str:
         return self.first_name
+    
+# Create your models here.
+class Menu(models.Model):
+    name = models.CharField(max_length=200)
+    price = models.IntegerField()
+
+    def __str__(self):
+        return self.name

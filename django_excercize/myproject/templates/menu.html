@@ -1,0 +1,10 @@
+<!-- FILEPATH: /Users/osanaidaisuke/project/python_coucera/django_excercize/myproject/templates/menu.html -->
+<!-- Add code to display contents of the Menu -->
+{% if menu %}
+    {% for item in menu %}
+        {{ item.name }} : {{ item.price }}
+        <br>
+    {% endfor %}
+{% else %}
+    No items to display
+{% endif %}

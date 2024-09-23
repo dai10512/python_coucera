@@ -1,1 +1,6 @@
 # このディレクトリ直下の全てのファイルを無視する　django_review/littlelemmon/
+django_review/littlelemon/*
+django_review/__MACOSX/*
+
+# このディレクトリ直下の全てのファイルを無視する　django_review/の下のzipファイル
+django_review/*.zip

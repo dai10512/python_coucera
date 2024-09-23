@@ -1,6 +1,14 @@
 This project is for Django
 
+## About
+
+This project has two directory as section. One is for Python cording. Another is for Django.
+There are some project in the section.
+
 ## Little Lemon Restaurant Web Application
+
+Developing Little lemon restaurant Web Application is final task for Django course.
+Here is how to watch it.
 
 ```
 cd django exercise/
@@ -23,3 +31,7 @@ website
 
 admin panel
 `http://127.0.0.1:8000/admin/`
+
+<!-- 参照 -->
+
+![screen](assets/screen_sample.gif)

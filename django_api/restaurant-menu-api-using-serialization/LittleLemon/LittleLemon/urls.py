@@ -21,7 +21,7 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('LittleLemonDRF.urls'))
+    path('api/', include('LittleLemonDRF.urls')) # 追加
 ]
 
 if settings.DEBUG:

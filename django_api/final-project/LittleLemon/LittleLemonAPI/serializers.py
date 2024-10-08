@@ -9,12 +9,16 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
+    foreign_key = CategorySerializer()
+
     class Meta:
         model = MenuItem
         fields = '__all__'
 
 
 class CartSerializer(serializers.ModelSerializer):
+    foreign_key = MenuItemSerializer()
+
     class Meta:
         model = Cart
         fields = '__all__'
@@ -28,6 +32,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    foreign_key = OrderSerializer()
+    foreign_key = MenuItemSerializer()
+
     class Meta:
         model = OrderItem
         fields = '__all__'

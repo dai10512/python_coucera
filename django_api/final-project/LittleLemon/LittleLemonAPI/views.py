@@ -1,27 +1,65 @@
-from django.http import response
-from .models import MenuItem, Order
-
+from .models import MenuItem, Order, Cart
+from .serializers import MenuItemSerializer, OrderSerializer, CartSerializer
+from rest_framework import generics
 
 # Create your views here.
-class MenuItemsView(response):
+
+
+class UsersView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
-    # serializer_class = MenuItemSerializer
+    serializer_class = MenuItemSerializer
 
 
-class SingleMenuItemView(response):
+class UsersUsersMeView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
-    # serializer_class = MenuItemSerializer
+    serializer_class = MenuItemSerializer
 
 
-class CartMenuItemsView(response):
+class TokenLoginView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
-    # serializer_class = MenuItemSerializer
+    serializer_class = MenuItemSerializer
 
 
-class OrdersView(response):
+class MenuItemsView(generics.ListCreateAPIView):
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
+
+
+class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
+
+
+class GroupsManagerUsersView(generics.ListCreateAPIView):
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
+
+
+class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
+
+
+class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
+
+
+class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
+
+
+class CartMenuItemsView(generics.ListCreateAPIView):
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
+
+
+class OrdersView(generics.ListCreateAPIView):
     queryset = Order.objects.all()
-    # serializer_class = MenuItemSerializer
+    serializer_class = OrderSerializer
 
 
-class SingleOrdersView(response):
+class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
+    serializes_class = OrderSerializer

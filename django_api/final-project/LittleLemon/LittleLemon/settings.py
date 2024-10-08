@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'LittleLemonAPI',
-    'rest-framework',
+    'rest_framework',
     'djoser',
 ]
 

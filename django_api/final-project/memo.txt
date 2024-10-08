@@ -1,0 +1,5 @@
+superuser
+
+id:test1234
+email:test1234@example.com
+password:test1234

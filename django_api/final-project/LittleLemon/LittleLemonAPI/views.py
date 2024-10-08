@@ -1,5 +1,6 @@
-from .models import MenuItem, Order, Cart
-from .serializers import MenuItemSerializer, OrderSerializer, CartSerializer
+from .models import MenuItem, Order
+from .serializers import MenuItemSerializer, OrderSerializer, UserSerializer
+from django.contrib.auth.models import User
 from rest_framework import generics
 
 # Create your views here.
@@ -31,28 +32,28 @@ class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class GroupsManagerUsersView(generics.ListCreateAPIView):
-    queryset = MenuItem.objects.all()
-    serializer_class = MenuItemSerializer
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 
 class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = MenuItem.objects.all()
-    serializer_class = MenuItemSerializer
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 
 class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
-    queryset = MenuItem.objects.all()
-    serializer_class = MenuItemSerializer
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 
 class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = MenuItem.objects.all()
-    serializer_class = MenuItemSerializer
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 
 class CartMenuItemsView(generics.ListCreateAPIView):
-    queryset = Cart.objects.all()
-    serializer_class = CartSerializer
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
 
 
 class OrdersView(generics.ListCreateAPIView):

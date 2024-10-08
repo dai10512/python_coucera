@@ -37,7 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'LittleLemonDRF'
+    # 作成したアプリケーションを追加
+    'LittleLemonDRF',
+    # DRFのプレビュー機能を追加
+    'rest_framework',
+    # DRFと認証トークンのためのアプリケーションを追加
+    'rest_framework.authtoken',
+    # ユーザー認証のためのアプリケーションを追加
+    'djoser',
 ]
 
 MIDDLEWARE = [
@@ -124,7 +131,13 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
+    # 'DEFAULT_RENDERER_CLASSES': (
+    #     'rest_framework.renderers.JSONRenderer',
+    # ),
 
     # Add code to assign default authentication classes
-    
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
 }

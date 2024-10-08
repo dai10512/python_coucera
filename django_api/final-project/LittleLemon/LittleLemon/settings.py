@@ -79,6 +79,7 @@ WSGI_APPLICATION = 'LittleLemon.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+# flake8: noqa: E501
 
 DATABASES = {
     'default': {

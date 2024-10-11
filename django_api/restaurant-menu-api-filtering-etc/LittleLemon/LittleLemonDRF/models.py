@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Category(models.Model):
     slug = models.SlugField()
     title = models.CharField(max_length=255)
@@ -10,7 +11,7 @@ class Category(models.Model):
 
 class MenuItem(models.Model):
     category = models.ForeignKey(to=Category,
-                                 on_delete=models.PROTECT, default=1) # 外部キー
+                                 on_delete=models.PROTECT, default=1)  # 外部キー
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=5, decimal_places=2)
     inventory = models.SmallIntegerField()

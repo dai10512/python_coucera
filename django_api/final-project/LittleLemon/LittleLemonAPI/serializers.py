@@ -6,15 +6,17 @@ from django.contrib.auth.models import User
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['id', 'slug', 'title']
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
-    foreign_key = CategorySerializer()
+    category_id = serializers.IntegerField(write_only=True)
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = MenuItem
-        fields = '__all__'
+        fields = ['id', 'title', 'price',
+                  'category', 'featured', 'category_id']
 
 
 class CartSerializer(serializers.ModelSerializer):

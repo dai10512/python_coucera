@@ -55,141 +55,145 @@ class MenuItemsView(
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+    #     return permission
 
 
 class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+    #     return permission
 
 
-class GroupsManagerUsersView(generics.ListCreateAPIView):
+class GroupsManagerUsersView(
+    generics.ListCreateAPIView,
+    generics.CreateAPIView,
+):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+    #     return permission
 
 
 class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+#         return permission
+#
 
 
 class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+    #     return permission
 
 
 class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+    #     return permission
 
 
 class CartMenuItemsView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+    #     return permission
 
 
 class OrdersView(generics.ListCreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+    #     return permission
 
 
 class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
     serializes_class = OrderSerializer
 
-    def get_permissions(self):
-        permission = get_permissions(
-            method=self.request.method,
-            get=[],
-            post=[IsManager()],
-            put=[IsManager()],
-            patch=[IsManager()],
-            delete=[IsManager()],
-        )
-        return permission
+    # def get_permissions(self):
+    #     permission = get_permissions(
+    #         method=self.request.method,
+    #         get=[],
+    #         post=[IsManager()],
+    #         put=[IsManager()],
+    #         patch=[IsManager()],
+    #         delete=[IsManager()],
+    #     )
+    #     return permission

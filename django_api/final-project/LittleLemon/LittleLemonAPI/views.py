@@ -1,4 +1,4 @@
-from .models import MenuItem, Order
+from .models import MenuItem, Order, Cart
 from .serializers import MenuItemSerializer, OrderSerializer, UserSerializer
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
@@ -11,6 +11,22 @@ def user_in_group(self, group_name):
     """ユーザーが指定されたグループに属しているかを確認するヘルパーメソッド"""
     return self.request.user.groups.filter(name=group_name).exists()
 # Create your views here.
+
+
+def response403():
+    return Response(status=status.HTTP_403_FORBIDDEN)
+
+
+def is_manager(self):
+    return user_in_group(self, 'Manager')
+
+
+def is_crew(self):
+    return user_in_group(self, 'DeliveryCrew')
+
+
+def is_customer(self):
+    return not is_manager(self) and not is_crew(self)
 
 
 class MenuItemsView(
@@ -36,23 +52,27 @@ class MenuItemsView(
         return Response(serializer.data, status.HTTP_200_OK)
 
     def post(self, request):
-        if user_in_group(self, 'Manager'):
+        if is_manager(self):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(serializer.data, status.HTTP_201_CREATED)
-            else:
-                return Response(
-                    serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
     def put(self, request, pk):
-        return Response(status=status.HTTP_403_FORBIDDEN)
+        return response403()
 
     def patch(self, request, pk):
-        return Response(status=status.HTTP_403_FORBIDDEN)
+        return response403()
 
     def delete(self, request, pk):
-        return Response(status=status.HTTP_403_FORBIDDEN)
+        return response403()
 
 
 class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
@@ -71,29 +91,45 @@ class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
     # def post(self, request, pk):
 
     def put(self, request, pk):
-        if user_in_group(self, 'Manager'):
-            menu_item = self.get_object_or_404(MenuItem, pk=pk)
+        if is_manager(self):
+            menu_item = get_object_or_404(MenuItem, pk=pk)
             serializer = MenuItemSerializer(menu_item, data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status.HTTP_200_OK)
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
     def patch(self, request, pk):
-        if user_in_group(self, 'Manager'):
-            menu_item = self.get_object_or_404(MenuItem, pk=pk)
+        if is_manager(self):
+            menu_item = get_object_or_404(MenuItem, pk=pk)
             serializer = MenuItemSerializer(
                 menu_item, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status.HTTP_200_OK)
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
     def delete(self, request, pk):
-        if user_in_group(self, 'Manager'):
+        if is_manager(self):
             menu_item = self.get_object_or_404(MenuItem, pk=pk)
             menu_item.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
+
 
 # ここは管理画面で権限を割り振る
 
@@ -108,20 +144,29 @@ class GroupsManagerUsersView(
         return [IsAuthenticated()]
 
     def get(self, request):
-        if user_in_group(self, 'Manager'):
+        if is_manager(self):
             users = User.objects.filter(groups__name='Manager')
             serializer = self.get_serializer(users, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
     def post(self, request):
-        if user_in_group(self, 'Manager'):
+        if is_manager(self):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(serializer.data, status.HTTP_201_CREATED)
-            else:
-                return Response(
-                    serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
 
 class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
@@ -132,10 +177,15 @@ class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
         return [IsAuthenticated()]
 
     def delete(self, request, pk):
-        if user_in_group(self, 'Manager'):
+        if is_manager(self):
             user = self.get_object_or_404(User, pk=pk)
             user.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
 
 class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
@@ -146,20 +196,30 @@ class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
         return [IsAuthenticated()]
 
     def get(self, request):
-        if user_in_group(self, 'Manager'):
+
+        if is_manager(self):
             users = self.queryset.filter(groups__name='DeliveryCrew')
             serializer = self.get_serializer(users, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
     def post(self, request):
-        if user_in_group(self, 'Manager'):
+        if is_manager(self):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise__exception=True):
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED)
-            else:
-                return Response(
-                    serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
 
 class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
@@ -170,10 +230,15 @@ class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
         return [IsAuthenticated()]
 
     def delete(self, request, pk):
-        if user_in_group(self, 'Manager'):
+        if is_manager(self):
             user = self.get_object_or_404(User, pk=pk)
             user.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()
 
 
 class CartMenuItemsView(generics.ListCreateAPIView):
@@ -184,23 +249,29 @@ class CartMenuItemsView(generics.ListCreateAPIView):
         return [IsAuthenticated()]
 
     def get(self, request, pk):
-        isManager = user_in_group(self, 'Manager')
-        isDeliveryCrew = user_in_group(self, 'DeliveryCrew')
-        isCustomer = not isManager and not isDeliveryCrew
-        if isCustomer:
+        if is_manager(self):
+            return response403()
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
             menu_items = self.get_queryset().filter(user=request.user)
             serializer = self.get_serializer(menu_items, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        return response403()
 
     def post(self, request, pk):
-        isManager = user_in_group(self, 'Manager')
-        isDeliveryCrew = user_in_group(self, 'DeliveryCrew')
-        isCustomer = not isManager and not isDeliveryCrew
-        if isCustomer:
+        if is_manager(self):
+            return response403()
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(serializer.data, status.HTTP_201_CREATED)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return response403()
 
 
 class OrdersView(generics.ListCreateAPIView):
@@ -211,35 +282,36 @@ class OrdersView(generics.ListCreateAPIView):
         return [IsAuthenticated()]
 
     def get(self, request, pk):
-        isManager = user_in_group(self, 'Manager')
-        isCrew = user_in_group(self, 'DeliveryCrew')
-        isCustomer = not isManager and not isCrew
-        if isManager:
+        if is_manager(self):
             orders = self.get_queryset()
             serializer = self.get_serializer(orders, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        if isCrew:
+        if is_crew(self):
             orders = self.get_queryset().filter(delivery_crew=request.user)
             serializer = self.get_serializer(orders, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        if isCustomer:
+        if is_customer(self):
             orders = self.get_queryset().filter(user=request.user)
             serializer = self.get_serializer(orders, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        return response403()
 
     def post(self, request, pk):
-        isManager = user_in_group(self, 'Manager')
-        isCrew = user_in_group(self, 'DeliveryCrew')
-        isCustomer = not isManager and not isCrew
-        if isCustomer:
-            serializer = self.get_object_or_404(data=request.data)
+        if is_manager(self):
+            return response403()
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            serializer = self.get_serializer(data=request.data)
             if serializer.isValid(raise_exception=True):
+                cart = Cart.objects.filter(user=request.user)
                 serializer.save()
+                cart.delete()
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED)
-            else:
-                return Response(
-                    serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return response403()
 
 
 class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
@@ -250,44 +322,36 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
         return [IsAuthenticated()]
 
     def get(self, request, pk):
-        isManager = user_in_group(self, 'Manager')
-        isCrew = user_in_group(self, 'DeliveryCrew')
-        isCustomer = not isManager and not isCrew
-        if isManager:
-            pass
-        if isCrew:
-            pass
-        if isCustomer:
+        if is_manager(self):
+            return response403()
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
             order = self.get_object_or_404(Order, pk=pk)
             serializer = self.get_serializer(order)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        order = self.get.object_or_404(Order, pk=pk)
-        serializer = self.get_serializer(order)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request, pk):
-        pass
+        return response403()
 
     def put(self, request, pk):
-        isManager = user_in_group(self, 'Manager')
-        isCrew = user_in_group(self, 'DeliveryCrew')
-        isCustomer = not isManager and not isCrew
-        if isCustomer:
+        if is_manager(self):
+            return response403()
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
             order = self.get_object_or_404(Order, pk=pk)
             serializer = self.get_serializer(order, data=request.data)
             if (serializer.is_valid(raise_exception=True)):
                 serializer.save()
                 return Response(
                     serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return response403()
 
     def patch(self, request, pk):
-        isManager = user_in_group(self, 'Manager')
-        isCrew = user_in_group(self, 'DeliveryCrew')
-        isCustomer = not isManager and not isCrew
-        if isCrew:
+        if is_manager(self):
+            return response403()
+        if is_crew(self):
             order = self.get_object_or_404(pk=pk)
             serializer = self.get_serializer(
                 order, data=request.data, partial=True)
@@ -295,7 +359,9 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
                 serializer.save()
                 return Response(
                     serializer.data, status=status.HTTP_200_OK)
-        if isCustomer:
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if is_customer(self):
             order = self.get_object_or_404(Order, pk=pk)
             serializer = self.get_serializer(
                 order, data=request.data, partial=True)
@@ -303,15 +369,17 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
                 serializer.save()
                 return Response(
                     serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return response403()
 
     def delete(self, request, pk):
-        isManager = user_in_group(self, 'Manager')
-        isCrew = user_in_group(self, 'DeliveryCrew')
-        isCustomer = not isManager and not isCrew
-        if isManager:
+        if is_manager(self):
             order = self.get_object_or_404(Order, pk=pk)
             order.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        if is_crew(self):
+            return response403()
+        if is_customer(self):
+            return response403()
+        return response403()

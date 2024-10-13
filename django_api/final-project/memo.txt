@@ -25,9 +25,9 @@ o 3.	The admin can add menu items
 
 o 4.	The admin can add categories
 
-5.	Managers can log in
+o 5.	Managers can log in
 
-6.	Managers can update the item of the day
+o 6.	Managers can update the item of the day
 
 7.	Managers can assign users to the delivery crew
 

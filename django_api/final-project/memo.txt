@@ -17,15 +17,15 @@ password:test1234customer
 
 
 
-0 1.	The admin can assign users to the manager group 
+o 1.	The admin can assign users to the manager group 
 
-0 2.	You can access the manager group with an admin token
+o 2.	You can access the manager group with an admin token
 
-3.	The admin can add menu items 
+o 3.	The admin can add menu items 
 
-4.	The admin can add categories
+o 4.	The admin can add categories
 
-5.	Managers can log in 
+5.	Managers can log in
 
 6.	Managers can update the item of the day
 

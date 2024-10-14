@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, generics
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator, EmptyPage
 
 
 from enum import Enum
@@ -37,9 +38,7 @@ def is_customer(self):
     return not is_manager(self) and not is_crew(self)
 
 
-class MenuItemsView(
-    generics.ListCreateAPIView,
-):
+class MenuItemsView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
 
@@ -47,26 +46,34 @@ class MenuItemsView(
         # すべての認証済みユーザーがアクセス可能
         return [IsAuthenticated()]
 
-    # def get_queryset(self):
-    #     category_id = self.request.query_params.get('category')
-    #     items = self.get_queryset().filter(category__id=category_id)
-    #     serializer = self.get_serializer(items, many=True)
-    #     return Response(serializer.data, status.HTTP_200_OK)
-
     def get(self, request):
         id = request.query_params.get('id')
-        title = request.query_params.get('title')
         price = request.query_params.get('price')
         category_id = request.query_params.get('category_id')
+        featured = request.query_params.get('featured')
+        search = request.query_params.get('search')
+        ordering = request.query_params.get('ordering')
+        perpage = request.query_params.get('perpage', default=10)
+        page = request.query_params.get('page', default=1)
         menu_items = self.get_queryset()
         if id:
             menu_items = menu_items.filter(id=id)
-        if title:
-            menu_items = menu_items.filter(title=title)
         if price:
             menu_items = menu_items.filter(price=price)
         if category_id:
             menu_items = menu_items.filter(category__id=category_id)
+        if featured:
+            menu_items = menu_items.filter(featured=featured)
+        if search:
+            menu_items = menu_items.filter(title__icontains=search)
+        if ordering:
+            ordering_field = ordering.split(',')
+            menu_items = menu_items.order_by(*ordering_field)
+        paginator = Paginator(menu_items, per_page=perpage)
+        try:
+            menu_items = paginator.page(page)
+        except EmptyPage:
+            menu_items = []
         serializer = self.get_serializer(menu_items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

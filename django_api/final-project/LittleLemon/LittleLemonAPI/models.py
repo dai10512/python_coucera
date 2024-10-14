@@ -20,6 +20,7 @@ class MenuItem(models.Model):
     featured = models.BooleanField(db_index=True)
     category = models.ForeignKey(
         Category, on_delete=models.PROTECT)
+    ordering_fields = ['id', 'title', 'price', 'featured']  # 順序
 
     def __str__(self):
         return str(self.id) + ':' + self.title

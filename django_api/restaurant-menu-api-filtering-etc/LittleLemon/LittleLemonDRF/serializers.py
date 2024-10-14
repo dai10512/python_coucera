@@ -14,6 +14,7 @@ class MenuItemSerializer (serializers.ModelSerializer):
     # 外部キーとしてのCAtegoryの出力値
     category = CategorySerializer(read_only=True)
 
+
     class Meta:
         model = MenuItem
         fields = ['id', 'title', 'price',

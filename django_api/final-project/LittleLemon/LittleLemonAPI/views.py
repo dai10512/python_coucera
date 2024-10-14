@@ -75,7 +75,8 @@ class MenuItemsView(
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                return Response(serializer.data, status.HTTP_201_CREATED)
+                return Response(
+                    serializer.data, status.HTTP_201_CREATED)
             return Response(
                 serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         if is_crew(self):
@@ -84,18 +85,8 @@ class MenuItemsView(
             return response403()
         return response403()
 
-    def put(self, request, pk):
-        return response403()
-
-    def patch(self, request, pk):
-        return response403()
-
-    def delete(self, request, pk):
-        return response403()
-
 
 class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
 
     def get_permissions(self):
@@ -278,7 +269,7 @@ class CartMenuItemsView(generics.ListCreateAPIView):
         if is_crew(self):
             return response403()
         if is_customer(self):
-            menu_items = self.get_queryset().filter(user=request.user)
+            menu_items = self.get_queryset().filter(cart__user=request.user)
             serializer = self.get_serializer(menu_items, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return response403()

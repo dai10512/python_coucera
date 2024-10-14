@@ -35,7 +35,6 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    foreign_key = OrderSerializer()
     foreign_key = MenuItemSerializer()
 
     class Meta:

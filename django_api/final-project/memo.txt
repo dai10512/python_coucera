@@ -16,6 +16,8 @@ id:customer
 password:test1234customer
 
 
+https://www.coursera.org/learn/apis/lecture/h7QUx/filtering-and-searching
+
 
 o 1.	The admin can assign users to the manager group 
 
@@ -29,7 +31,7 @@ o 5.	Managers can log in
 
 o 6.	Managers can update the item of the day
 
-7.	Managers can assign users to the delivery crew
+o 7.	Managers can assign users to the delivery crew
 
 8.	Managers can assign orders to the delivery crew
 
@@ -37,15 +39,15 @@ o 6.	Managers can update the item of the day
 
 10.	The delivery crew can update an order as delivered
 
-11.	Customers can register
+o 11.	Customers can register
 
-12.	Customers can log in using their username and password and get access tokens
+o 12.	Customers can log in using their username and password and get access tokens
 
-13.	Customers can browse all categories 
+x 13.	Customers can browse all categories 
 
-14.	Customers can browse all the menu items at once
+x 14.	Customers can browse all the menu items at once
 
-15.	Customers can browse menu items by category
+x 15.	Customers can browse menu items by category
 
 16.	Customers can paginate menu items
 

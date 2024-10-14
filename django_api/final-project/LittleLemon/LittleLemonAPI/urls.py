@@ -6,7 +6,7 @@ from . import views
 
 urlpatterns = [
     path('', include('djoser.urls')),
-    path('menu-items/', views.MenuItemsView.as_view()),
+    path('menu-items', views.MenuItemsView.as_view()),
     path('menu-items/<int:pk>', views.MenuItemsSingleView.as_view()),
     path('groups/manager/users', views.GroupsManagerUsersView.as_view()),
     path('groups/manager/users/<int:pk>',

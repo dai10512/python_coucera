@@ -18,8 +18,8 @@ class MenuItem(models.Model):
     title = models.CharField(max_length=255, db_index=True)
     price = models.DecimalField(max_digits=6, decimal_places=2, db_index=True)
     featured = models.BooleanField(db_index=True)
-    category = models.ForeignKey(Category, on_delete=models.PROTECT,
-                                 )
+    category = models.ForeignKey(
+        Category, on_delete=models.PROTECT)
 
     def __str__(self):
         return str(self.id) + ':' + self.title
@@ -37,7 +37,9 @@ class Cart(models.Model):
         unique_together = ('user', 'menuitem')
 
     def __str__(self):
-        return str(self.id) + ':' + self.user.username + '-' + self.menuitem.title
+        username = self.user.username
+        menu_title = self.menuitem.title
+        return str(self.id) + ':' + username + '-' + menu_title
 
 
 class Order(models.Model):
@@ -72,4 +74,6 @@ class OrderItem(models.Model):
         unique_together = ('order', 'menuitem')
 
     def __str__(self):
-        return str(self.id) + ':' + self.order.user.username + '-' + self.menuitem.title
+        username = self.order.user.username
+        menu_title = self.menuitem.title
+        return str(self.id) + ':' + username + '-' + menu_title

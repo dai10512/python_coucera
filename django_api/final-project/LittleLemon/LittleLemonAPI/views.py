@@ -1,10 +1,18 @@
 from .models import MenuItem, Order, Cart
 from .serializers import MenuItemSerializer, OrderSerializer, UserSerializer
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, generics
 from django.shortcuts import get_object_or_404
+
+
+from enum import Enum
+
+
+class GroupName(Enum):
+    MANAGER = 'Manager'
+    DELIVERY_CREW = 'Delivery crew'
 
 
 def user_in_group(self, group_name):
@@ -18,11 +26,11 @@ def response403():
 
 
 def is_manager(self):
-    return user_in_group(self, 'Manager')
+    return user_in_group(self, GroupName.MANAGER.value)
 
 
 def is_crew(self):
-    return user_in_group(self, 'DeliveryCrew')
+    return user_in_group(self, GroupName.DELIVERY_CREW.value)
 
 
 def is_customer(self):
@@ -30,14 +38,7 @@ def is_customer(self):
 
 
 class MenuItemsView(
-    # get
-    generics.ListAPIView,
-    # post
-    generics.CreateAPIView,
-    # put patch
-    generics.UpdateAPIView,
-    # delete
-    generics.DestroyAPIView
+    generics.ListCreateAPIView,
 ):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
@@ -46,10 +47,28 @@ class MenuItemsView(
         # すべての認証済みユーザーがアクセス可能
         return [IsAuthenticated()]
 
-    def get(self, _):
-        items = self.get_queryset()
-        serializer = self.get_serializer(items, many=True)
-        return Response(serializer.data, status.HTTP_200_OK)
+    # def get_queryset(self):
+    #     category_id = self.request.query_params.get('category')
+    #     items = self.get_queryset().filter(category__id=category_id)
+    #     serializer = self.get_serializer(items, many=True)
+    #     return Response(serializer.data, status.HTTP_200_OK)
+
+    def get(self, request):
+        id = request.query_params.get('id')
+        title = request.query_params.get('title')
+        price = request.query_params.get('price')
+        category_id = request.query_params.get('category_id')
+        menu_items = self.get_queryset()
+        if id:
+            menu_items = menu_items.filter(id=id)
+        if title:
+            menu_items = menu_items.filter(title=title)
+        if price:
+            menu_items = menu_items.filter(price=price)
+        if category_id:
+            menu_items = menu_items.filter(category__id=category_id)
+        serializer = self.get_serializer(menu_items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         if is_manager(self):
@@ -143,7 +162,8 @@ class GroupsManagerUsersView(
 
     def get(self, request):
         if is_manager(self):
-            users = self.get_queryset().filter(groups__name='Manager')
+            users = self.get_queryset().filter(
+                groups__name=GroupName.MANAGER.value)
             serializer = self.get_serializer(users, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if is_crew(self):
@@ -154,12 +174,11 @@ class GroupsManagerUsersView(
 
     def post(self, request):
         if is_manager(self):
-            user_id = request.data.get('id')
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                user = self.get_query_set.filter(id=user_id)
-                user.groups.add('Manager')
+                user = serializer.save()
+                manager_group = Group.objects.get(name=GroupName.MANAGER.value)
+                manager_group.user_set.add(user)
                 return Response(serializer.data, status.HTTP_201_CREATED)
             return Response(
                 serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -198,7 +217,8 @@ class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
 
     def get(self, request):
         if is_manager(self):
-            users = self.get_queryset().filter(groups__name='DeliveryCrew')
+            users = self.get_queryset().filter(
+                groups__name=GroupName.DELIVERY_CREW.value)
             serializer = self.get_serializer(users, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if is_crew(self):
@@ -209,12 +229,12 @@ class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
 
     def post(self, request):
         if is_manager(self):
-            user_id = request.data.get('id')
             serializer = self.get_serializer(data=request.data)
-            if serializer.is_valid(raise__exception=True):
-                serializer.save()
-                user = self.get_queryset().filter(id=user_id)
-                user.groups.add('DeliveryCrew')
+            if serializer.is_valid(raise_exception=True):
+                user = serializer.save()
+                crew_group = Group.objects.get(
+                    name=GroupName.DELIVERY_CREW.value)
+                crew_group.user_set.add(user)
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED)
             return Response(
@@ -252,7 +272,7 @@ class CartMenuItemsView(generics.ListCreateAPIView):
     def get_permissions(self):
         return [IsAuthenticated()]
 
-    def get(self, request, pk):
+    def get(self, request):
         if is_manager(self):
             return response403()
         if is_crew(self):
@@ -285,7 +305,7 @@ class OrdersView(generics.ListCreateAPIView):
     def get_permissions(self):
         return [IsAuthenticated()]
 
-    def get(self, request, pk):
+    def get(self, request):
         if is_manager(self):
             orders = self.get_queryset()
             serializer = self.get_serializer(orders, many=True)

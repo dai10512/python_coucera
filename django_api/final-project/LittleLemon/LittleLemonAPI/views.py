@@ -343,13 +343,14 @@ class OrdersView(generics.ListCreateAPIView):
         if is_customer(self):
             serializer = self.get_serializer(data=request.data)
             if serializer.isValid(raise_exception=True):
-                cart = Cart.objects.filter(user=request.user)
-                serializer.save()
-                cart.delete()
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED)
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                pass
+            #     cart = Cart.objects.filter(user=request.user)
+            #     serializer.save()
+            #     cart.delete()
+            #     return Response(
+            #         serializer.data, status=status.HTTP_201_CREATED)
+            # return Response(
+            #     serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return response403()
 
 

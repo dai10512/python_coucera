@@ -27,6 +27,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
 class CartSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    # menuitem = MenuItemSerializer()
     quantity = serializers.IntegerField(write_only=True)
     price = serializers.DecimalField(
         max_digits=6, decimal_places=2, read_only=True)
@@ -39,12 +40,19 @@ class CartSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context['request'].user
-        validated_data['user'] = user
-        # 必要なフィールドを計算して設定
-        validated_data['unit_price'] = self.calculate_unit_price(
-            validated_data)
-        validated_data['price'] = self.calculate_price(validated_data)
-        return super().create(validated_data)
+        menuitem = validated_data.get('menuitem')
+        try:
+            cart_item = Cart.objects.get(user=user, menuitem=menuitem)
+            cart_item.quantity += validated_data.get('quantity')
+            cart_item.unit_price = self.calculate_unit_price(validated_data)
+            cart_item.price = self.calculate_price(validated_data)
+            cart_item.save()
+        except Cart.DoesNotExist:
+            validated_data['user'] = user
+            validated_data['unit_price'] = self.calculate_unit_price(
+                validated_data)
+            validated_data['price'] = self.calculate_price(validated_data)
+            return super().create(validated_data)
 
     def calculate_unit_price(self, validated_data):
         # `unit_price`を計算する具体的なロジック

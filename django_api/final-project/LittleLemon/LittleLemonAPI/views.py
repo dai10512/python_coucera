@@ -1,11 +1,15 @@
 from .models import MenuItem, Order, Cart
-from .serializers import MenuItemSerializer, OrderSerializer, UserSerializer
+from .serializers import MenuItemSerializer
+from .serializers import OrderSerializer
+from .serializers import UserSerializer
+from .serializers import CartSerializer
 from django.contrib.auth.models import User, Group
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, generics
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, EmptyPage
+from django.forms.models import model_to_dict
 
 
 from enum import Enum
@@ -264,8 +268,8 @@ class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class CartMenuItemsView(generics.ListCreateAPIView):
-    queryset = MenuItem.objects.all()
-    serializer_class = MenuItemSerializer
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
 
     def get_permissions(self):
         return [IsAuthenticated()]
@@ -276,18 +280,31 @@ class CartMenuItemsView(generics.ListCreateAPIView):
         if is_crew(self):
             return response403()
         if is_customer(self):
-            menu_items = self.get_queryset().filter(cart__user=request.user)
-            serializer = self.get_serializer(menu_items, many=True)
+            carts = self.get_queryset().filter(user=request.user)
+            serializer = self.get_serializer(carts, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return response403()
 
-    def post(self, request, pk):
+    def post(self, request):
         if is_manager(self):
             return response403()
         if is_crew(self):
             return response403()
         if is_customer(self):
-            serializer = self.get_serializer(data=request.data)
+            # menu_item = get_object_or_404(
+            #     MenuItem, pk=request.data['menuitem'])
+            # print(menu_item)
+            # quantity = request.data['quantity']
+            # cart_obj = Cart(
+            #     user=request.user,
+            #     menuitem=menu_item,
+            #     price=1.20,
+            #     quantity=quantity,
+            #     unit_price=1.20,
+            # )
+            # cart_dic = model_to_dict(cart_obj)
+            serializer = CartSerializer(
+                data=request.data, context={'request': request})
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(serializer.data, status.HTTP_201_CREATED)
@@ -345,7 +362,9 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
 
     def get(self, request, pk):
         if is_manager(self):
-            return response403()
+            orders = self.get_queryset()
+            serializer = self.get_serializer(orders, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         if is_crew(self):
             return response403()
         if is_customer(self):

@@ -5,7 +5,7 @@ from .models import Category, MenuItem
 class CategorySerializer (serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['slug', 'title']
+        fields = ['id', 'title']
 
 
 class MenuItemSerializer (serializers.ModelSerializer):
@@ -13,7 +13,6 @@ class MenuItemSerializer (serializers.ModelSerializer):
     category_id = serializers.IntegerField(write_only=True)
     # 外部キーとしてのCAtegoryの出力値
     category = CategorySerializer(read_only=True)
-
 
     class Meta:
         model = MenuItem

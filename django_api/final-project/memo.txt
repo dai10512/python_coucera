@@ -49,9 +49,9 @@ x 14.	Customers can browse all the menu items at once
 
 x 15.	Customers can browse menu items by category
 
-16.	Customers can paginate menu items
+o 16.	Customers can paginate menu items
 
-17.	Customers can sort menu items by price
+o 17.	Customers can sort menu items by price
 
 18.	Customers can add menu items to the cart
 

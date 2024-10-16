@@ -28,7 +28,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     # menuitem = MenuItemSerializer()
-    quantity = serializers.IntegerField(write_only=True)
+    # quantity = serializers.IntegerField(write_only=True)
     price = serializers.DecimalField(
         max_digits=6, decimal_places=2, read_only=True)
     unit_price = serializers.DecimalField(
@@ -47,6 +47,7 @@ class CartSerializer(serializers.ModelSerializer):
             cart_item.unit_price = self.calculate_unit_price(validated_data)
             cart_item.price = self.calculate_price(validated_data)
             cart_item.save()
+            return cart_item
         except Cart.DoesNotExist:
             validated_data['user'] = user
             validated_data['unit_price'] = self.calculate_unit_price(

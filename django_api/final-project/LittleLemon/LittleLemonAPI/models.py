@@ -33,8 +33,8 @@ class Cart(models.Model):
     quantity = models.SmallIntegerField()
     unit_price = models.DecimalField(max_digits=6, decimal_places=2)
 
-    # class Meta:
-        # unique_together = ('user', 'menuitem')
+    class Meta:
+        unique_together = ('user', 'menuitem')
 
     def __str__(self):
         username = self.user.username

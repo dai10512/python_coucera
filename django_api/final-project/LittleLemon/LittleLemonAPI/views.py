@@ -30,6 +30,10 @@ def response403():
     return Response(status=status.HTTP_403_FORBIDDEN)
 
 
+def response404():
+    return Response(status=status.HTTP_404_NOT_FOUND)
+
+
 def is_manager(self):
     return user_in_group(self, GroupName.MANAGER.value)
 
@@ -104,13 +108,15 @@ class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
         # すべての認証済みユーザーがアクセス可能
         return [IsAuthenticated()]
 
-    def get(self, request, pk):
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
         item = get_object_or_404(MenuItem, pk=pk)
         serializer = self.get_serializer(item)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request, pk):
+    def put(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             menu_item = get_object_or_404(MenuItem, pk=pk)
             serializer = self.get_serializer(menu_item, data=request.data)
             if serializer.is_valid():
@@ -123,8 +129,9 @@ class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
             return response403()
         return response403()
 
-    def patch(self, request, pk):
+    def patch(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             menu_item = get_object_or_404(MenuItem, pk=pk)
             serializer = self.get_serializer(
                 menu_item, data=request.data, partial=True)
@@ -138,8 +145,9 @@ class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
             return response403()
         return response403()
 
-    def delete(self, request, pk):
+    def delete(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             menu_item = get_object_or_404(MenuItem, pk=pk)
             menu_item.delete()
             return Response(status=status.HTTP_200_OK)
@@ -198,11 +206,17 @@ class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
         return [IsAuthenticated()]
 
-    def delete(self, request, pk):
+    def delete(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             user = get_object_or_404(User, pk=pk)
-            user.delete()
-            return Response(status=status.HTTP_200_OK)
+            manager_group = Group.objects.get(name=GroupName.MANAGER.value)
+            isUserManager = user.groups.filter(
+                name=GroupName.MANAGER.value).exists()
+            if isUserManager:
+                user.groups.remove(manager_group)
+                return Response(status=status.HTTP_200_OK)
+            return response404()
         if is_crew(self):
             return response403()
         if is_customer(self):
@@ -255,8 +269,9 @@ class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
         return [IsAuthenticated()]
 
-    def delete(self, request, pk):
+    def delete(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             user = get_object_or_404(User, pk=pk)
             user.delete()
             return Response(status=status.HTTP_200_OK)
@@ -335,14 +350,14 @@ class OrdersView(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return response403()
 
-    def post(self, request, pk):
+    def post(self, request):
         if is_manager(self):
             return response403()
         if is_crew(self):
             return response403()
         if is_customer(self):
             serializer = self.get_serializer(data=request.data)
-            if serializer.isValid(raise_exception=True):
+            if serializer.is_valid(raise_exception=True):
                 pass
             #     cart = Cart.objects.filter(user=request.user)
             #     serializer.save()
@@ -356,13 +371,14 @@ class OrdersView(generics.ListCreateAPIView):
 
 class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
-    serializes_class = OrderSerializer
+    serializer_class = OrderSerializer
 
     def get_permissions(self):
         return [IsAuthenticated()]
 
-    def get(self, request, pk):
+    def get(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             orders = self.get_queryset()
             serializer = self.get_serializer(orders, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -374,11 +390,12 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return response403()
 
-    def put(self, request, pk):
+    def put(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
             serializer = self.get_serializer(order, data=request.data)
-            if (serializer.is_valid(raise_exception=True)):
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(
                     serializer.data, status=status.HTTP_200_OK)
@@ -390,8 +407,9 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
             return response403()
         return response403()
 
-    def patch(self, request, pk):
+    def patch(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
             serializer = self.get_serializer(
                 order, data=request.data, partial=True)
@@ -416,8 +434,9 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
             return response403()
         return response403()
 
-    def delete(self, request, pk):
+    def delete(self, request, *args, **kwargs):
         if is_manager(self):
+            pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
             order.delete()
             return Response(status=status.HTTP_200_OK)

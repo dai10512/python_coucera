@@ -80,6 +80,9 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = '__all__'
+        extra_kwargs = {
+            'status': {'min_value': 0, 'max_value': 1}
+        }
 
 
 class UserSerializer(serializers.ModelSerializer):

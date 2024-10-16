@@ -27,8 +27,6 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
 class CartSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    # menuitem = MenuItemSerializer()
-    # quantity = serializers.IntegerField(write_only=True)
     price = serializers.DecimalField(
         max_digits=6, decimal_places=2, read_only=True)
     unit_price = serializers.DecimalField(

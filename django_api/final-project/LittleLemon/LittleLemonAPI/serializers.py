@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import MenuItem, Category, Cart, Order, OrderItem
 from django.contrib.auth.models import User
+from datetime import datetime
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -68,15 +69,34 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    delivery_crew = UserSerializer(read_only=True)
+    # ここでOrderItemSerializerを使用する
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['status', 'date', 'delivery_crew',
+                  'total', 'user']
+        read_only_fields = ['status', 'date',
+                            'delivery_crew', 'total', 'user']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        carts = Cart.objects.filter(user=user)
+        total = 0
+        for cart in carts:
+            total += cart.price
+        order_data = {
+            'user': user,
+            'delivery_crew': None,
+            'status': 0,
+            'total': total,
+            'date': datetime.now(),
+        }
+        return Order.objects.create(**order_data)
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    foreign_key = MenuItemSerializer()
-
     class Meta:
         model = OrderItem
         fields = '__all__'

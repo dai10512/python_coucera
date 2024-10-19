@@ -1,8 +1,10 @@
-from .models import MenuItem, Order, Cart
+from datetime import datetime
+from .models import MenuItem, Order, Cart, OrderItem
 from .serializers import MenuItemSerializer
 from .serializers import OrderSerializer
 from .serializers import UserSerializer
 from .serializers import CartSerializer
+from .serializers import OrderItemSerializer
 from django.contrib.auth.models import User, Group
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -49,10 +51,7 @@ def is_customer(self):
 class MenuItemsView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
-
-    def get_permissions(self):
-        # すべての認証済みユーザーがアクセス可能
-        return [IsAuthenticated()]
+    Permission_classes = [IsAuthenticated]
 
     def get(self, request):
         id = request.query_params.get('id')
@@ -103,10 +102,7 @@ class MenuItemsView(generics.ListCreateAPIView):
 
 class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = MenuItemSerializer
-
-    def get_permissions(self):
-        # すべての認証済みユーザーがアクセス可能
-        return [IsAuthenticated()]
+    Permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         pk = kwargs.get('pk')
@@ -166,9 +162,7 @@ class GroupsManagerUsersView(
 ):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    def get_permissions(self):
-        return [IsAuthenticated()]
+    Permission_classes = [IsAuthenticated]
 
     def get(self, request):
         if is_manager(self):
@@ -202,9 +196,7 @@ class GroupsManagerUsersView(
 class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    def get_permissions(self):
-        return [IsAuthenticated()]
+    Permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
         if is_manager(self):
@@ -227,9 +219,7 @@ class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
 class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    def get_permissions(self):
-        return [IsAuthenticated()]
+    Permission_classes = [IsAuthenticated]
 
     def get(self, request):
         if is_manager(self):
@@ -265,9 +255,7 @@ class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
 class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    def get_permissions(self):
-        return [IsAuthenticated()]
+    Permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
         if is_manager(self):
@@ -285,9 +273,7 @@ class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
 class CartMenuItemsView(generics.ListCreateAPIView):
     queryset = Cart.objects.all()
     serializer_class = CartSerializer
-
-    def get_permissions(self):
-        return [IsAuthenticated()]
+    Permission_classes = [IsAuthenticated]
 
     def get(self, request):
         if is_manager(self):
@@ -331,9 +317,7 @@ class CartMenuItemsView(generics.ListCreateAPIView):
 class OrdersView(generics.ListCreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-
-    def get_permissions(self):
-        return [IsAuthenticated()]
+    Permission_classes = [IsAuthenticated]
 
     def get(self, request):
         if is_manager(self):
@@ -356,38 +340,54 @@ class OrdersView(generics.ListCreateAPIView):
         if is_crew(self):
             return response403()
         if is_customer(self):
-            serializer = self.get_serializer(data=request.data)
+            # まずCartを確認
+            cart = get_object_or_404(Cart, pk=request.user.id)
+            serializer = self.get_serializer(
+                data=request.data, context={'request': request})
             if serializer.is_valid(raise_exception=True):
-                pass
-            #     cart = Cart.objects.filter(user=request.user)
-            #     serializer.save()
-            #     cart.delete()
-            #     return Response(
-            #         serializer.data, status=status.HTTP_201_CREATED)
-            # return Response(
-            #     serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                order = serializer.save()
+                order_item_data = {
+                    'order': order.id,
+                    'menuitem': cart.menuitem.id,
+                    'quantity': cart.quantity,
+                    'unit_price': cart.unit_price,
+                    'price': cart.price,
+                }
+                order_item_serializer = OrderItemSerializer(
+                    data=order_item_data)
+                if order_item_serializer.is_valid(raise_exception=True):
+                    order_item_serializer.save()
+                    cart.delete()
+                    return Response(
+                        serializer.data, status=status.HTTP_201_CREATED)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return response403()
 
 
 class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-
-    def get_permissions(self):
-        return [IsAuthenticated()]
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
+    Permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         if is_manager(self):
             pk = kwargs.get('pk')
+            order = get_object_or_404(Order, pk=pk)
             orders = self.get_queryset()
             serializer = self.get_serializer(orders, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if is_crew(self):
             return response403()
         if is_customer(self):
+            pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
-            serializer = self.get_serializer(order)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            order_items = OrderItem.objects.filter(order=order)
+
+            # order_items = OrderItem.objects.filter(order=order)
+            # serializer = self.get_serializer(order)
+            self.get_serializer(order_items[0])
+            return Response(order_items[0], status=status.HTTP_200_OK)
         return response403()
 
     def put(self, request, *args, **kwargs):

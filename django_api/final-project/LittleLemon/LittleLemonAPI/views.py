@@ -318,6 +318,9 @@ class OrdersView(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         if is_customer(self):
             orders = self.get_queryset().filter(user=request.user)
+            for order in orders:
+                order_items = OrderItem.objects.filter(order=order)
+                order.order_items = order_items
             serializer = self.get_serializer(orders, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return response403()

@@ -80,7 +80,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     delivery_crew = UserSerializer(read_only=True)
-    order_items = OrderItemSerializer(read_only=True, many=True)
+    order_items = OrderItemSerializer(many=True)
     # ここでOrderItemSerializerを使用する
 
     class Meta:

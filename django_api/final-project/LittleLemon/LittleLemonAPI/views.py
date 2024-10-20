@@ -292,8 +292,18 @@ class CartMenuItemsView(generics.ListCreateAPIView):
         if is_crew(self):
             return response403()
         if is_customer(self):
-            serializer = CartSerializer(
-                data=request.data, context={'request': request})
+            id = request.data['menuitem']
+            menu_item = get_object_or_404(MenuItem, id=id)
+            quantity = request.data['quantity']
+            # menu_item.price * quantity
+            data = {
+                'user': request.user.id,
+                'menuitem': menu_item.id,
+                'quantity': quantity,
+                'unit_price': menu_item.price,
+                'price': menu_item.price,
+            }
+            serializer = self.get_serializer(data=data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(serializer.data, status.HTTP_201_CREATED)
@@ -332,27 +342,45 @@ class OrdersView(generics.ListCreateAPIView):
             return response403()
         if is_customer(self):
             # まずCartを確認
-            cart = get_object_or_404(Cart, pk=request.user.id)
-            serializer = self.get_serializer(
-                data=request.data, context={'request': request})
+            # orderを保存
+            carts = Cart.objects.filter(user=request.user)
+            if (not carts):
+                return Response('Cart is empty',
+                                status=status.HTTP_400_BAD_REQUEST)
+            total = 0
+            for cart in carts:
+                total += cart.price
+            data = {
+                'user': request.user.id,
+                'date': datetime.now(),
+                'status': 0,
+                'total': total,
+                'delivery_crew': None,
+            }
+            serializer = self.get_serializer(data=data)
             if serializer.is_valid(raise_exception=True):
                 order = serializer.save()
-                order_item_data = {
-                    'order': order.id,
-                    'menuitem': cart.menuitem.id,
-                    'quantity': cart.quantity,
-                    'unit_price': cart.unit_price,
-                    'price': cart.price,
-                }
-                order_item_serializer = OrderItemSerializer(
-                    data=order_item_data)
-                if order_item_serializer.is_valid(raise_exception=True):
-                    order_item_serializer.save()
-                    data = serializer.data
-                    cart.delete()
-                    data.order_items = order_item_serializer.data
-                    return Response(
-                        data, status=status.HTTP_201_CREATED)
+                carts = Cart.objects.filter(user=request.user)
+            # cartとorderからorder_itemを作って保存
+                for cart in carts:
+                    order_item_data = {
+                        'order': order.id,
+                        'menuitem': cart.menuitem.id,
+                        'quantity': cart.quantity,
+                        'unit_price': cart.unit_price,
+                        'price': cart.price,
+                    }
+                    order_item_serializer = OrderItemSerializer(
+                        data=order_item_data)
+                    if order_item_serializer.is_valid(raise_exception=True):
+                        order_item_serializer.save()
+                        cart.delete()
+
+                order.order_items = OrderItem.objects.filter(
+                    order=order)
+                serializer = self.get_serializer(order)
+                return Response(
+                    serializer.data, status=status.HTTP_201_CREATED)
             return Response(
                 serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return response403()

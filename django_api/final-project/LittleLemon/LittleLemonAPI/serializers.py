@@ -68,17 +68,27 @@ class CartSerializer(serializers.ModelSerializer):
         return calculated_value
 
 
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = '__all__'
+        extra_kwargs = {
+            'status': {'min_value': 0, 'max_value': 1}
+        }
+
+
 class OrderSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     delivery_crew = UserSerializer(read_only=True)
+    order_items = OrderItemSerializer(read_only=True, many=True)
     # ここでOrderItemSerializerを使用する
 
     class Meta:
         model = Order
         fields = ['status', 'date', 'delivery_crew',
-                  'total', 'user']
+                  'total', 'user', 'order_items']
         read_only_fields = ['status', 'date',
-                            'delivery_crew', 'total', 'user']
+                            'delivery_crew', 'total', 'user', 'order_items']
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -94,15 +104,6 @@ class OrderSerializer(serializers.ModelSerializer):
             'date': datetime.now(),
         }
         return Order.objects.create(**order_data)
-
-
-class OrderItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderItem
-        fields = '__all__'
-        extra_kwargs = {
-            'status': {'min_value': 0, 'max_value': 1}
-        }
 
 
 class UserSerializer(serializers.ModelSerializer):

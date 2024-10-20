@@ -292,18 +292,6 @@ class CartMenuItemsView(generics.ListCreateAPIView):
         if is_crew(self):
             return response403()
         if is_customer(self):
-            # menu_item = get_object_or_404(
-            #     MenuItem, pk=request.data['menuitem'])
-            # print(menu_item)
-            # quantity = request.data['quantity']
-            # cart_obj = Cart(
-            #     user=request.user,
-            #     menuitem=menu_item,
-            #     price=1.20,
-            #     quantity=quantity,
-            #     unit_price=1.20,
-            # )
-            # cart_dic = model_to_dict(cart_obj)
             serializer = CartSerializer(
                 data=request.data, context={'request': request})
             if serializer.is_valid(raise_exception=True):
@@ -357,18 +345,21 @@ class OrdersView(generics.ListCreateAPIView):
                     data=order_item_data)
                 if order_item_serializer.is_valid(raise_exception=True):
                     order_item_serializer.save()
+                    data = serializer.data
                     cart.delete()
+                    data.order_items = order_item_serializer.data
                     return Response(
-                        serializer.data, status=status.HTTP_201_CREATED)
+                        data, status=status.HTTP_201_CREATED)
             return Response(
                 serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return response403()
 
 
 class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = OrderItem.objects.all()
-    serializer_class = OrderItemSerializer
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
     Permission_classes = [IsAuthenticated]
+    # order_serializer = OrderSerializer
 
     def get(self, request, *args, **kwargs):
         if is_manager(self):
@@ -383,11 +374,11 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
             pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
             order_items = OrderItem.objects.filter(order=order)
-
-            # order_items = OrderItem.objects.filter(order=order)
-            # serializer = self.get_serializer(order)
-            self.get_serializer(order_items[0])
-            return Response(order_items[0], status=status.HTTP_200_OK)
+            order.order_items = order_items
+            serializer = self.get_serializer(order)
+            data = serializer.data
+            data.order_items = order_items
+            return Response(data, status=status.HTTP_200_OK)
         return response403()
 
     def put(self, request, *args, **kwargs):

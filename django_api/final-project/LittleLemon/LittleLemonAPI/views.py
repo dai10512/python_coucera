@@ -55,7 +55,7 @@ class MenuItemsView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
     Permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         id = request.query_params.get('id')
         title = request.query_params.get('title')
@@ -86,7 +86,6 @@ class MenuItemsView(generics.ListCreateAPIView):
             menu_items = []
         serializer = self.get_serializer(menu_items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-        
 
     def post(self, request):
         if is_manager(self) or is_superuser(self):

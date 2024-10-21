@@ -9,8 +9,9 @@ django-rest-framework = "*"
 djoser = "*"
 autopep8 = "*"
 flake8 = "*"
+django-filter = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.12"
+python_version = "3.11"

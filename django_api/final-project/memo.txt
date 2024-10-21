@@ -33,7 +33,7 @@ o 6.	Managers can update the item of the day
 
 o 7.	Managers can assign users to the delivery crew
 
-8.	Managers can assign orders to the delivery crew
+o 8.	Managers can assign orders to the delivery crew
 
 9.	The delivery crew can access orders assigned to them
 

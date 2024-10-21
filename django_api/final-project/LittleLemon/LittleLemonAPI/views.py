@@ -59,37 +59,6 @@ class MenuItemsView(generics.ListCreateAPIView):
     filterset_fields = ['id', 'price', 'category_id', 'featured']
     search_fields = ['title']
 
-    # def get(self, request):
-    #     id = request.query_params.get('id')
-    #     price = request.query_params.get('price')
-    #     category_id = request.query_params.get('category_id')
-    #     featured = request.query_params.get('featured')
-    #     search = request.query_params.get('search')
-    #     ordering = request.query_params.get('ordering')
-    #     perpage = request.query_params.get('perpage', default=5)
-    #     page = request.query_params.get('page', default=1)
-    #     menu_items = self.get_queryset()
-    #     if id:
-    #         menu_items = menu_items.filter(id=id)
-    #     if price:
-    #         menu_items = menu_items.filter(price__lte=price)
-    #     if category_id:
-    #         menu_items = menu_items.filter(category__id=category_id)
-    #     if featured:
-    #         menu_items = menu_items.filter(featured=featured)
-    #     if search:
-    #         menu_items = menu_items.filter(title__icontains=search)
-    #     if ordering:
-    #         ordering_field = ordering.split(',')
-    #         menu_items = menu_items.order_by(*ordering_field)
-    #     paginator = Paginator(menu_items, per_page=perpage)
-    #     try:
-    #         menu_items = paginator.page(page)
-    #     except EmptyPage:
-    #         menu_items = []
-    #     serializer = self.get_serializer(menu_items, many=True)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-
     def post(self, request):
         if is_manager(self) or is_superuser(self):
             serializer = self.get_serializer(data=request.data)
@@ -184,6 +153,7 @@ class GroupsManagerUsersView(
 
     def post(self, request):
         if is_manager(self) or is_superuser(self):
+
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 user = serializer.save()
@@ -492,7 +462,6 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
                     serializer.data, status=status.HTTP_200_OK)
             return Response(
                 serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            # return response403()
         if is_crew(self):
             order = get_object_or_404(pk=pk)
             new_status = self.request['status']

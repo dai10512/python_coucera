@@ -11,7 +11,6 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, EmptyPage
-from django.forms.models import model_to_dict
 
 
 from enum import Enum
@@ -34,6 +33,10 @@ def response403():
 
 def response404():
     return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+def is_superuser(self):
+    return self.request.user.is_superuser
 
 
 def is_manager(self):
@@ -60,7 +63,7 @@ class MenuItemsView(generics.ListCreateAPIView):
         featured = request.query_params.get('featured')
         search = request.query_params.get('search')
         ordering = request.query_params.get('ordering')
-        perpage = request.query_params.get('perpage', default=10)
+        perpage = request.query_params.get('perpage', default=5)
         page = request.query_params.get('page', default=1)
         menu_items = self.get_queryset()
         if id:
@@ -85,7 +88,7 @@ class MenuItemsView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
@@ -111,7 +114,7 @@ class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             menu_item = get_object_or_404(MenuItem, pk=pk)
             serializer = self.get_serializer(menu_item, data=request.data)
@@ -126,7 +129,7 @@ class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
         return response403()
 
     def patch(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             menu_item = get_object_or_404(MenuItem, pk=pk)
             serializer = self.get_serializer(
@@ -142,7 +145,7 @@ class MenuItemsSingleView(generics.RetrieveUpdateDestroyAPIView):
         return response403()
 
     def delete(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             menu_item = get_object_or_404(MenuItem, pk=pk)
             menu_item.delete()
@@ -165,7 +168,7 @@ class GroupsManagerUsersView(
     Permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             users = self.get_queryset().filter(
                 groups__name=GroupName.MANAGER.value)
             serializer = self.get_serializer(users, many=True)
@@ -177,7 +180,7 @@ class GroupsManagerUsersView(
         return response403()
 
     def post(self, request):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 user = serializer.save()
@@ -199,7 +202,7 @@ class GroupsManagerUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
     Permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             user = get_object_or_404(User, pk=pk)
             manager_group = Group.objects.get(name=GroupName.MANAGER.value)
@@ -222,7 +225,7 @@ class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
     Permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             users = self.get_queryset().filter(
                 groups__name=GroupName.DELIVERY_CREW.value)
             serializer = self.get_serializer(users, many=True)
@@ -234,7 +237,7 @@ class GroupsDeliveryCrewUsersView(generics.ListCreateAPIView):
         return response403()
 
     def post(self, request):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 user = serializer.save()
@@ -258,7 +261,7 @@ class GroupsDeliveryCrewUsersSingleView(generics.RetrieveUpdateDestroyAPIView):
     Permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             user = get_object_or_404(User, pk=pk)
             user.delete()
@@ -276,8 +279,10 @@ class CartMenuItemsView(generics.ListCreateAPIView):
     Permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if is_manager(self):
-            return response403()
+        if is_manager(self) or is_superuser(self):
+            carts = self.get_queryset()
+            serializers = self.get_serializer(carts, many=True)
+            return Response(serializers.data, status=status.HTTP_200_OK)
         if is_crew(self):
             return response403()
         if is_customer(self):
@@ -328,12 +333,13 @@ class OrdersView(generics.ListCreateAPIView):
     Permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
+
             orders = self.get_queryset()
             serializer = self.get_serializer(orders, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if is_crew(self):
-            orders = self.get_queryset().filter(delivery_crew=request.user)
+            orders = self.get_queryset().filter(delivery_crew__isnull=False)
             serializer = self.get_serializer(orders, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if is_customer(self):
@@ -401,7 +407,7 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
     Permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
             orders = self.get_queryset()
@@ -411,7 +417,7 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
             return response403()
         if is_customer(self):
             pk = kwargs.get('pk')
-            order = get_object_or_404(Order, pk=pk)
+            order = get_object_or_404(Order, pk=pk, user=request.user)
             order_items = OrderItem.objects.filter(order=order)
             order.order_items = order_items
             serializer = self.get_serializer(order)
@@ -421,7 +427,7 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
         return response403()
 
     def put(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
             serializer = self.get_serializer(order, data=request.data)
@@ -438,7 +444,7 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
         return response403()
 
     def patch(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
             serializer = self.get_serializer(
@@ -452,6 +458,8 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
             # return response403()
         if is_crew(self):
             order = get_object_or_404(pk=pk)
+            new_status = self.request['status']
+            order.status = new_status
             serializer = self.get_serializer(
                 order, data=request.data, partial=True)
             if (serializer.is_valid(raise_exception=True)):
@@ -465,7 +473,7 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
         return response403()
 
     def delete(self, request, *args, **kwargs):
-        if is_manager(self):
+        if is_manager(self) or is_superuser(self):
             pk = kwargs.get('pk')
             order = get_object_or_404(Order, pk=pk)
             order.delete()

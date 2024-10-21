@@ -55,9 +55,38 @@ class MenuItemsView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
     Permission_classes = [IsAuthenticated]
-    ordering_fields = ['id', 'title', 'price', 'featured']  # 順序
-    filterset_fields = ['id', 'price', 'category_id', 'featured']
-    search_fields = ['title']
+    
+    def get(self, request):
+        id = request.query_params.get('id')
+        title = request.query_params.get('title')
+        price = request.query_params.get('price')
+        category_id = request.query_params.get('category_id')
+        featured = request.query_params.get('featured')
+        ordering = request.query_params.get('ordering')
+        perpage = request.query_params.get('perpage', default=5)
+        page = request.query_params.get('page', default=1)
+        menu_items = self.get_queryset()
+        if id:
+            menu_items = menu_items.filter(id=id)
+        if title:
+            menu_items = menu_items.filter(title=title)
+        if price:
+            menu_items = menu_items.filter(price_lte=price)
+        if category_id:
+            menu_items = menu_items.filter(category_id=category_id)
+        if featured:
+            menu_items = menu_items.filter(featured=featured)
+        if ordering:
+            ordering_fields = ordering.split(',')
+            menu_items = menu_items.order_by(*ordering_fields)
+        paginator = Paginator(menu_items, per_page=perpage)
+        try:
+            menu_items = paginator.page(page)
+        except EmptyPage:
+            menu_items = []
+        serializer = self.get_serializer(menu_items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
 
     def post(self, request):
         if is_manager(self) or is_superuser(self):

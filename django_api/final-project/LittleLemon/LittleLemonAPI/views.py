@@ -55,37 +55,40 @@ class MenuItemsView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
     Permission_classes = [IsAuthenticated]
+    ordering_fields = ['id', 'title', 'price', 'featured']  # 順序
+    filterset_fields = ['id', 'price', 'category_id', 'featured']
+    search_fields = ['title']
 
-    def get(self, request):
-        id = request.query_params.get('id')
-        price = request.query_params.get('price')
-        category_id = request.query_params.get('category_id')
-        featured = request.query_params.get('featured')
-        search = request.query_params.get('search')
-        ordering = request.query_params.get('ordering')
-        perpage = request.query_params.get('perpage', default=5)
-        page = request.query_params.get('page', default=1)
-        menu_items = self.get_queryset()
-        if id:
-            menu_items = menu_items.filter(id=id)
-        if price:
-            menu_items = menu_items.filter(price=price)
-        if category_id:
-            menu_items = menu_items.filter(category__id=category_id)
-        if featured:
-            menu_items = menu_items.filter(featured=featured)
-        if search:
-            menu_items = menu_items.filter(title__icontains=search)
-        if ordering:
-            ordering_field = ordering.split(',')
-            menu_items = menu_items.order_by(*ordering_field)
-        paginator = Paginator(menu_items, per_page=perpage)
-        try:
-            menu_items = paginator.page(page)
-        except EmptyPage:
-            menu_items = []
-        serializer = self.get_serializer(menu_items, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    # def get(self, request):
+    #     id = request.query_params.get('id')
+    #     price = request.query_params.get('price')
+    #     category_id = request.query_params.get('category_id')
+    #     featured = request.query_params.get('featured')
+    #     search = request.query_params.get('search')
+    #     ordering = request.query_params.get('ordering')
+    #     perpage = request.query_params.get('perpage', default=5)
+    #     page = request.query_params.get('page', default=1)
+    #     menu_items = self.get_queryset()
+    #     if id:
+    #         menu_items = menu_items.filter(id=id)
+    #     if price:
+    #         menu_items = menu_items.filter(price__lte=price)
+    #     if category_id:
+    #         menu_items = menu_items.filter(category__id=category_id)
+    #     if featured:
+    #         menu_items = menu_items.filter(featured=featured)
+    #     if search:
+    #         menu_items = menu_items.filter(title__icontains=search)
+    #     if ordering:
+    #         ordering_field = ordering.split(',')
+    #         menu_items = menu_items.order_by(*ordering_field)
+    #     paginator = Paginator(menu_items, per_page=perpage)
+    #     try:
+    #         menu_items = paginator.page(page)
+    #     except EmptyPage:
+    #         menu_items = []
+    #     serializer = self.get_serializer(menu_items, many=True)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         if is_manager(self) or is_superuser(self):
@@ -332,24 +335,58 @@ class OrdersView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
     Permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        if is_manager(self) or is_superuser(self):
+    def paginate1(orders, perpage, page):
+        paginator = Paginator(orders, per_page=perpage)
+        try:
+            orders = paginator.page(page)
+        except EmptyPage:
+            orders = []
+        return orders
 
+    def get(self, request):
+        orders = []
+        if is_manager(self) or is_superuser(self):
             orders = self.get_queryset()
-            serializer = self.get_serializer(orders, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        if is_crew(self):
+        elif is_crew(self):
             orders = self.get_queryset().filter(delivery_crew__isnull=False)
-            serializer = self.get_serializer(orders, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        if is_customer(self):
+        elif is_customer(self):
             orders = self.get_queryset().filter(user=request.user)
-            for order in orders:
-                order_items = OrderItem.objects.filter(order=order)
-                order.order_items = order_items
-            serializer = self.get_serializer(orders, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return response403()
+        else:
+            return response403()
+        id = request.query_params.get('id')
+        user = request.query_params.get('user')
+        delivery_crew = request.query_params.get('delivery_crew')
+        status_query = request.query_params.get('status')
+        total = request.query_params.get('total')
+        date = request.query_params.get('date')
+        ordering = request.query_params.get('ordering')
+        if id:
+            orders = orders.filter(id=id)
+        if user:
+            orders = orders.filter(user__id=user)
+        if delivery_crew:
+            orders = orders.filter(delivery_crew__id=delivery_crew)
+        if status_query:
+            orders = orders.filter(status=status)
+        if total:
+            orders = orders.filter(total=total)
+        if date:
+            orders = orders.filter(date=date)
+        if ordering:
+            ordering_fields = ordering.split(',')
+            orders = orders.order_by(*ordering_fields)
+        perpage = request.query_params.get('perpage', default=5)
+        page = request.query_params.get('page', default=1)
+        paginator = Paginator(orders, per_page=perpage)
+        try:
+            orders = paginator.page(page)
+        except EmptyPage:
+            orders = []
+        for order in orders:
+            order_items = OrderItem.objects.filter(order=order)
+            order.order_items = order_items
+        serializer = self.get_serializer(orders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         if is_manager(self):

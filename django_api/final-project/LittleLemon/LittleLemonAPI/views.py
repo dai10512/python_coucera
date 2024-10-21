@@ -296,19 +296,29 @@ class CartMenuItemsView(generics.ListCreateAPIView):
             menu_item = get_object_or_404(MenuItem, id=id)
             quantity = request.data['quantity']
             # menu_item.price * quantity
-            data = {
-                'user': request.user.id,
-                'menuitem': menu_item.id,
-                'quantity': quantity,
-                'unit_price': menu_item.price,
-                'price': menu_item.price,
-            }
-            serializer = self.get_serializer(data=data)
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response(serializer.data, status.HTTP_201_CREATED)
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            carts = Cart.objects.filter(user=request.user, menuitem=menu_item)
+            if not carts:
+                data = {
+                    'user_id': request.user.id,
+                    'menuitem_id': menu_item.id,
+                    'quantity': quantity,
+                    'unit_price': menu_item.price,
+                    'price': menu_item.price,
+                }
+                serializer = self.get_serializer(data=data)
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+                    return Response(serializer.data, status.HTTP_201_CREATED)
+                return Response(
+                    serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                cart = carts[0]
+                cart.quantity += int(quantity)
+                cart.price = cart.unit_price * cart.quantity
+                cart.save()
+                serializer = self.get_serializer(cart)
+                return Response(serializer.data,
+                                status=status.HTTP_201_CREATED)
         return response403()
 
 
@@ -351,11 +361,10 @@ class OrdersView(generics.ListCreateAPIView):
             for cart in carts:
                 total += cart.price
             data = {
-                'user': request.user.id,
+                'user_id': request.user.id,
                 'date': datetime.now(),
                 'status': 0,
                 'total': total,
-                'delivery_crew': None,
             }
             serializer = self.get_serializer(data=data)
             if serializer.is_valid(raise_exception=True):
@@ -390,7 +399,6 @@ class OrdersSingleView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     Permission_classes = [IsAuthenticated]
-    # order_serializer = OrderSerializer
 
     def get(self, request, *args, **kwargs):
         if is_manager(self):

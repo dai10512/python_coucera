@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'slug', 'title']
+        fields = '__all__'
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
@@ -22,16 +22,19 @@ class MenuItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = MenuItem
         fields = ['id', 'title', 'price',
-                  'category', 'featured', 'category_id']
+                  'featured', 'category_id', 'category']
 
 
 class CartSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-    menuitem = MenuItemSerializer()
+    user_id = serializers.IntegerField(write_only=True)
+    user = UserSerializer(read_only=True)
+    menuitem_id = serializers.IntegerField(write_only=True)
+    menuitem = MenuItemSerializer(read_only=True)
 
     class Meta:
         model = Cart
-        fields = ['user', 'quantity', 'menuitem', 'price', 'unit_price']
+        fields = ['id', 'user', 'user_id', 'menuitem_id', 'menuitem',
+                  'unit_price', 'quantity', 'unit_price', 'price']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -44,12 +47,20 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    delivery_crew = UserSerializer(required=False)
+    user = UserSerializer(read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+
+    delivery_crew = UserSerializer(
+        read_only=True, required=False)
+    delivery_crew_id = serializers.IntegerField(
+        write_only=True, required=False)
+
     order_items = OrderItemSerializer(many=True, required=False)
+    order_items_id = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True, required=False)
     # ここでOrderItemSerializerを使用する
 
     class Meta:
         model = Order
-        fields = ['status', 'date', 'delivery_crew',
-                  'total', 'user', 'order_items']
+        fields = '__all__'
         read_only_fields = ['order_items']
